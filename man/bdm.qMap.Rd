@@ -26,7 +26,7 @@ bdm.qMap(bdm, layer = 1, data = NULL, labels = NULL, subset = NULL,
 None.
 }
 \description{
-ptSNE quantile-maps
+Shows the mapping of quantitative variables into the embedding space.
 }
 \examples{
 

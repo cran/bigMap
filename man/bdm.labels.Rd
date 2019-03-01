@@ -11,7 +11,7 @@ bdm.labels(bdm, layer = 1, merged = T)
 
 \item{layer}{The number of the t-SNE layer (1 by default).}
 
-\item{merged}{A logical value. If TRUE (default value) and the \var{bdm} has been merged, the returned data-point labelling correspond to merged clusters. If \var{merged} is set to FALSE or the \var{bdm} has not been merged the data-point labels that are returned correspond to the top-level clustering.}
+\item{merged}{A logical value. If TRUE (default value) and the \var{bdm} has been merged, the data-point labelling indicate the number of the merged clusters. If \var{merged} is set to FALSE or the \var{bdm} has not been merged the data-point labels correspond to the top-level clustering.}
 }
 \value{
 A vector of data-point clustering labels.

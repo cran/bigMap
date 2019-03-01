@@ -13,7 +13,7 @@ bdm.save(...)
 None
 }
 \description{
-Saves a \var{bdm} instance with default path/file names, as given by \code{bdm.mybdm()/bdm.fName(bdm)}. Default file name is generated based on \code{bdm$dSet} and ptSNE main parameters (threads, layers, rounds, perplexity).  The purpose of functions \code{bdm.save()} and \code{bdm.scp()} used with \code{bdm.fName()} is to ease the task of working/organizing multiple runs on the same dataset.
+Saves a \var{bdm} instance with default path/file names, as given by \code{bdm.mybdm()/bdm.fName(bdm)}. Default file name is generated based on \code{bdm$dSet} and ptSNE main parameters (threads, layers, boost, rounds, perplexity).  The purpose of functions \code{bdm.save()} and \code{bdm.scp()} used with \code{bdm.fName()} is to ease the task of working/organizing multiple runs on the same dataset.
 }
 \examples{
 

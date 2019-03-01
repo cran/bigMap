@@ -41,7 +41,7 @@ knitr::opts_chunk$set(fig.align = 'center', out.width = '70%')
 
 \bigskip
 \begin{abstract}
-The bigMap R-package integrates a \textit{mapping method} (\textit{i.e.} a multi-step unsupervised clustering protocol) for large-scale structured data. The protocol follows three steps: a dimensionality reduction of the data, a density estimation over the low dimensional representation of the data, and a final segmentation of the density landscape. For the dimensionality reduction step we use a parallelized implementation of the well-known \textit{t-Stochastic Neighbouring Embedding} (t-SNE) algorithm that significantly alleviates some inherent limitations, while improving its suitability for large datasets. For the clustering we use the paKDE algorithm an \textit{adaptive Kernel Density Estimation} particularly coupled with the t-SNE framework in order to get accurate density estimates out of the embedded data, and the \textit{watertrack transform} (WTT) a variant of the \textit{rainfalling watershed} algorithm to identify clusters within the density landscape.
+The bigMap R-package integrates a \textit{mapping method} (\textit{i.e.} a multi-step unsupervised clustering protocol) for large-scale structured data. The protocol follows three steps: a dimensionality reduction of the data, a density estimation over the low dimensional representation of the data, and a final segmentation of the density landscape. For the dimensionality reduction step we use a parallelized implementation of the well-known \textit{t-Stochastic Neighbouring Embedding} (t-SNE) algorithm that significantly alleviates some inherent limitations, while improving its suitability for large datasets. For the clustering we use the \textit{perplexity-adaptive Kernel Density Estimation} (paKDE) algorithm, an adaptive KDE particularly coupled with the t-SNE framework in order to get accurate density estimates out of the embedded data, and the \textit{watertrack transform} (WTT) a variant of the \textit{rainfalling watershed} algorithm to identify clusters within the density landscape.
 \end{abstract}
 
 \newpage
@@ -502,7 +502,7 @@ bdm.dMap.plot(myMap, classes = c('B', 'D', 'E'))
 bdm.boxp(myMap)
 ```
 
-# Submitting jobs in multiprocessor systems
+# Working with remote multiprocessor systems
 
 ## Easy managing of ptSNE runs.
 

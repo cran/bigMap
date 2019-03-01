@@ -14,15 +14,15 @@ bdm.init(dSet.name, dSet.data, labels = NULL, is.distance = F,
 
 \item{labels}{If available, labels can be included as a separate vector of length equal to \code{nrow(dSet.data)}. Label values are factorized as \code{as.numeric(as.factor(labels))}.}
 
-\item{is.distance}{A logical value (FALSE by default). TRUE indicates that raw data is indeed a distance matrix.}
+\item{is.distance}{A logical value (FALSE by default). TRUE indicates that the raw data is indeed a distance matrix.}
 
 \item{check.duplicates}{If set to TRUE (default value) the dataset is checked for duplicated rows. Checking for duplicates in big datasets can take some time. If the dataset is known to have no duplicates disabling this option will save time.}
 }
 \value{
-A \var{bdm} instance. A \var{bdm} instance is initially a list with a few elements (data and dataset information) to which new elements are added at each step of the mapping protocol.
+A \var{bdm} instance. A \var{bdm} instance is initially a list with a few elements to which new elements are added at each step of the mapping protocol.
 }
 \description{
-Creates a \var{bdm} instance from
+Creates a \var{bdm} instance.
 }
 \examples{
 

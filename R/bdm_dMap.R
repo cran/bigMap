@@ -26,8 +26,9 @@
 #'
 #' @return A copy of the input \var{bdm} instance with element \var{$dMap}, a matrix with a soft clustering of the grid cells.
 #'
-#' @details \code{bdm.dMap()} computes the join distribution \eqn{P\left(V=v_{i},C=c_{j}\right)} where \eqn{V={v_{1},\dots,v_{l}}} is the discrete covariate and \eqn{C={c_{1},\dots, c_{g}}} are the grid cells of the paKDE raster. That is, this function recomputes the paKDE but keeping track of the covariate (or class) label of each data-point. This results in a fuzzy distribution of the covariate (class) at each cell.
-#' Usually, figuring out the join distribution \eqn{P\left(V=v_{i},C=c_{j}\right)} entails an intensive computation. Thus *bdm.dMap()* performs the computation and stores the result in a dedicated element named *\$dMap*. Afterwards the class density maps can be visualized with the *bdm.dMap.plot()* function.
+#' @details \code{bdm.dMap()} computes the join distribution \eqn{P(V=v_{i},C=c_{j})} where \eqn{V={v_{1},\dots,v_{l}}} is the discrete covariate and \eqn{C={c_{1},\dots, c_{g}}} are the grid cells of the paKDE raster. That is, this function recomputes the paKDE but keeping track of the covariate (or class) label of each data-point. This results in a fuzzy distribution of the covariate (class) at each cell.
+#'
+#' Usually, figuring out the join distribution \eqn{P(V=v_{i},C=c_{j})} entails an intensive computation. Thus \code{bdm.dMap()} performs the computation and stores the result in a dedicated element named \var{$dMap}. Afterwards the class density maps can be visualized with the \code{bdm.dMap.plot()} function.
 #'
 #' @examples
 #'
@@ -126,17 +127,17 @@ thread.dMap <- function()
 #'
 #' @param classes A vector with a subset of class names or covariate values. Default value is \code{classes=NULL}. If no classes are specified (default value) all classes are plotted.
 #'
-#' @param join Logical value. If FALSE (default value) class mapping is based on the class conditional distributions. If TRUE class mapping is base on all classes join distribution.
+#' @param join Logical value. If FALSE (default value), class mapping is based on the class conditional distributions. If TRUE, class mapping is based on the overall classes join distribution.
 #'
 #' @param class.pltt A palette of colours to identify the classes in the hard mapping. The length of the colour palette should be at least the number of classes plus one (the background colour being the first colour of the palette).
 #'
 #' @param pakde.lvls  The number of levels of the heat-map when plotting class density maps (16 by default).
 #'
-#' @param pakde.pltt A palette of colours to be used for the class density maps. The length of the colour palette should be at least the number of levels specified in \var{pakde.lvls}.
+#' @param pakde.pltt A palette of colours to indicate the levels of the class density maps. The length of the colour palette should be at least the number of levels specified in \var{pakde.lvls}.
 #'
 #' @param wtt.lwd The width of the watertrack lines (as set in \code{par()}).
 #'
-#' @param plot.peaks Logical value (TRUE by default). If set to TRUE and the up-stream step \code{bdm$wtt()} is computed marks the peak of each cluster.
+#' @param plot.peaks Logical value (TRUE by default). If set to TRUE and the up-stream step \code{bdm$wtt()} is computed the peak of each cluster is depicted.
 #'
 #' @param labels.cex If \var{plot.peaks} is TRUE, the size of the labels of the clusters (as set in \code{par()}). By default \code{labels.cex=0.0} and the labels of the clusters are not depicted.
 #'
@@ -145,8 +146,11 @@ thread.dMap <- function()
 #' @return None.
 #'
 #' @details \code{bdm.dMap.plot()} yields a multi-plot layout where the first plot shows the dominating value of the covariate (or dominating class) in each cell, and the rest of the plots show the density map of each covariate value (or class).
-#' The join distribution \eqn{P\left(V=v_{i},C=c_{j}\right)} will be affected by any bias present in the marginal distribution of the covariate. Therefore, the join distribution \eqn{P\left(V=v_{i},C=c_{j}\right)} is transformed, by default, into a conditional distribution \eqn{P\left(c_{j}|V=v_{i}\right)} (where the \eqn{c_{j}} are the grid cells of the embedding and V is the covariate (or class)). Thus, the first plot shows a hard classification of grid-cells, (cells are coloured based on the dominating value of the covariate (or dominating class), \emph{i.e}. the \eqn{v_{i}} for which \eqn{P\left(c_{j}|V=v_{i}\right)} is maximum), and the rest of the plots show the conditional distributions \eqn{P\left(C=c_{j}|V=v_{i}\right)}. This makes the plots of the different classes not directly comparable but the dominant areas of each class can be more easily identified.
-#' However, the same plots can be depicted based on the join distribution, by setting \code{join = TRUE}. This makes sense when the bias in the covariate values (or classes) is not significant. In this case the hard clustering shows the real dominance of each covariate value (or class) over the embedding area and the density maps are comparable one to each other (although they are not real density functions as they do not add up to one).
+#'
+#' The join distribution \eqn{P(V=v_{i},C=c_{j})} will be affected by the bias present in the marginal distribution of the covariate. Therefore, the join distribution \eqn{P(V=v_{i},C=c_{j})} is transformed, by default, into a conditional distribution \eqn{P(c_{j}|V=v_{i})} (where the \eqn{c_{j}} are the grid cells of the embedding and V is the covariate (or class)). Thus, the first plot shows a hard classification of grid-cells, (cells are coloured based on the dominating value of the covariate (or dominating class), \emph{i.e}. the \eqn{v_{i}} for which \eqn{P(c_{j}|V=v_{i})} is maximum), and the rest of the plots show the conditional distributions \eqn{P(C=c_{j}|V=v_{i})}. This makes the plots of the different classes not directly comparable but the dominant areas of each class can be more easily identified.
+#'
+#' However, the same plots can be depicted based on the join distribution by setting \code{join = TRUE}. This makes sense when the bias in the covariate values (or classes) is not significant. In this case the hard clustering shows the real dominance of each covariate value (or class) over the embedding area and the density maps are comparable one to each other (although, individually, they are not real density functions as they do not add up to one).
+#'
 #' The multi-plot layout can be limited to a subset of the values of the covariate (or subset of classes) specified in parameter \code{classes}.
 #'
 #' @examples

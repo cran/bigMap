@@ -15,7 +15,7 @@ bdm.wtt(bdm, layer = 1)
 A copy of the input \var{bdm} instance with \var{bdm$wtt} (WTT output). \code{bdm$wtt[[layer]]$layer = 'NC'} stands for not computed layers.
 }
 \description{
-Watertrack transform (WTT)
+Starts the WTT algorithm (third setp of the mapping protocol).
 }
 \details{
 This function requires the up-stream step \code{bdm.pakde()}.

@@ -24,8 +24,9 @@ A copy of the input \var{bdm} instance with element \var{$dMap}, a matrix with a
 Compute the class density maps of a set of classes on the embedding grid. This function returns a fuzzy mapping of the set of classes on the grid cells.  The classes can be whatever set of classes of interest and must be given as a vector of point-wise discrete labels (either numeric, string or factor).
 }
 \details{
-\code{bdm.dMap()} computes the join distribution \eqn{P\left(V=v_{i},C=c_{j}\right)} where \eqn{V={v_{1},\dots,v_{l}}} is the discrete covariate and \eqn{C={c_{1},\dots, c_{g}}} are the grid cells of the paKDE raster. That is, this function recomputes the paKDE but keeping track of the covariate (or class) label of each data-point. This results in a fuzzy distribution of the covariate (class) at each cell.
-Usually, figuring out the join distribution \eqn{P\left(V=v_{i},C=c_{j}\right)} entails an intensive computation. Thus *bdm.dMap()* performs the computation and stores the result in a dedicated element named *\$dMap*. Afterwards the class density maps can be visualized with the *bdm.dMap.plot()* function.
+\code{bdm.dMap()} computes the join distribution \eqn{P(V=v_{i},C=c_{j})} where \eqn{V={v_{1},\dots,v_{l}}} is the discrete covariate and \eqn{C={c_{1},\dots, c_{g}}} are the grid cells of the paKDE raster. That is, this function recomputes the paKDE but keeping track of the covariate (or class) label of each data-point. This results in a fuzzy distribution of the covariate (class) at each cell.
+
+Usually, figuring out the join distribution \eqn{P(V=v_{i},C=c_{j})} entails an intensive computation. Thus \code{bdm.dMap()} performs the computation and stores the result in a dedicated element named \var{$dMap}. Afterwards the class density maps can be visualized with the \code{bdm.dMap.plot()} function.
 }
 \examples{
 

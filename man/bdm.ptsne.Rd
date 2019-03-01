@@ -13,7 +13,7 @@ bdm.ptsne(bdm, threads = 3, type = "SOCK", layers = 2, rounds = 1,
 
 \item{threads}{The number of parallel threads (in principle only limited by hardware resources, \code{i.e.} number of cores and available memory)}
 
-\item{type}{The type of cluster: 'SOCK' (default) for intra-node parallelization, 'MPI' for inter-node parallelization (\code{message passing interface} parallel environment).}
+\item{type}{The type of cluster: 'SOCK' (default) for intra-node parallelization, 'MPI' (\code{message passing interface}) for inter-node parallelization.}
 
 \item{layers}{The number of layers (\code{minimum} 2, \code{maximum} the number of threads).}
 
@@ -21,7 +21,7 @@ bdm.ptsne(bdm, threads = 3, type = "SOCK", layers = 2, rounds = 1,
 
 \item{boost}{A running time accelerator factor. By default (\code{boost == 1}). See details.}
 
-\item{whiten}{Preprocessing of raw data. If \code{whiten = 4} (default value) raw data is preprocessed by computing the principal components (PCA) and whitening the rotated data. If \code{whiten = 3} only PCA is performed without whitening. If \code{whiten = 2} raw data is only centered and scaled. If \code{whiten = 1} raw data is only centered. If \code{whiten = 0} no preprocessing is performed at all.}
+\item{whiten}{Preprocessing of raw data. If \code{whiten = 4} (default value) raw data is preprocessed by computing the principal components (PCA) and whitening the rotated data. If \code{whiten = 3} only PCA is performed with NO whitening. If \code{whiten = 2} raw data is only centered and scaled. If \code{whiten = 1} raw data is only centered. If \code{whiten = 0} no preprocessing is performed at all.}
 
 \item{input.dim}{If \var{whiten} is TRUE, input.dim sets the number of principal components to be used as input dimensions. By default \code{input.dim = min(ncol(bdm$data), 30)}. If \var{whiten} is FALSE all data columns will be used as input dimensions (\code{input.dim = ncol(bdm$data)}).}
 
@@ -41,11 +41,12 @@ bdm.ptsne(bdm, threads = 3, type = "SOCK", layers = 2, rounds = 1,
 A copy of the input \var{bdm} instance with new element \var{bdm$ptsne} (t-SNE output).
 }
 \description{
-Parallelized t-SNE
+Starts the ptSNE algorithm (first step of the mapping protocol).
 }
 \details{
-By default the algorithm is structured in \eqn{\sqrt{n}} epochs of \eqn{\sqrt{z}} iterations each, where \emph{n} is the dataset size and \emph{z} is the thread-size (\eqn{z=\,n\,layers/threads}). The running time of the algorithm is then determined by \eqn{epochs\,iters\,t_{i} + epochs\,t_{e}} where \eqn{t_{i}} is the running time of a single iteration and \eqn{t_{e}} is the inter-epoch running time.
-The \var{boost} factor is meant to reduce the running time. With \eqn{boost > 1} the algorithm is structured in \eqn{n/boost} epochs with \eqn{z*boost} iterations each. This structure performs the same total number of iterations with a smaller number of epochs, thus decreasing the the total running time to \eqn{epochs\,iters\,t_{i} + 1/boost\,epochs\,t_{e}}. When the number of threads is high, the inter-epoch time can be high, in particular when using 'MPI' parallelization, thus, reducing the number of epochs can result in a significant reduction of the total running time. The counterpart is that increasing the number of iterations per epoch might result in a lack of convergence, thus the \var{boost} factor must be used with caution. To the most of our knowledge using values up to \code{boost = 2.5} is generally safe.
+By default the algorithm is structured in \eqn{\sqrt{n}} epochs of \eqn{\sqrt{z}} iterations each, where \var{n} is the dataset size and \var{z} is the thread-size (\eqn{z=n*layers/threads}). The running time of the algorithm is then determined by \eqn{epochs*iters*t_i+ epochs*t_e} where \var{t_{i}} is the running time of a single iteration and \var{t_{e}} is the inter-epoch running time.
+
+The \var{boost} factor is meant to reduce the running time. With \eqn{boost > 1} the algorithm is structured in \eqn{n/boost} epochs with \eqn{z*boost} iterations each. This structure performs the same total number of iterations but arranged into a lower number of epochs, thus decreasing the total running time to \eqn{epochs*iters*t_i + 1/boost*epochs*t_e}. When the number of threads is high, the inter-epoch time can be high, in particular when using 'MPI' parallelization, thus, reducing the number of epochs can result in a significant reduction of the total running time. The counterpart is that increasing the number of iterations per epoch might result in a lack of convergence, thus the \var{boost} factor must be used with caution. To the most of our knowledge using values up to \eqn{boost=2.5} is generally safe.
 }
 \examples{
 

@@ -23,7 +23,7 @@ assign(local, local, envir = bigMap.Env)
 
 # Locked package variables
 # example-data path
-exbdm <- paste(system.file('extdata', package = 'bigMap'), '/', sep = '')
+# exbdm <- paste(system.file('extdata', package = 'bigMap'), '/', sep = '')
 
 
 #' Set/get default path for \var{mybdm}

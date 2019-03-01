@@ -13,8 +13,9 @@ An example \var{bdm} instance named \var{exMap}.
 Loads an example of a mapping of a dataset.
 }
 \details{
-A \var{bdm} instance is a list with elements: \var{$dSet} a name identifying the dataset (\code{bdm.fName()} use this name to generate a default file name to be used by \code{bdm.save()} and \code{bdm.scp()}; \var{$data} a matrix with raw data; \var{$lbls} a vector of datapoint labels in case they are known; \var{$N} the dataset size; \var{$is.distance} a logical value that is set to TRUE when the raw data is a distance matrix. As the protocol steps are performed, more elements are appended to the list, basically: \var{$ptsne} holds the parameters and output of the t-SNE; \var{$pakde} holds the parameters and output of the paKDE; \var{$wtt} holds the output of the WTT.
-This example corresponds to the mapping of a small synthetic dataset with \code{n = 5000} observations drawn from a 4-variate Gaussian Mixture Model (GMM) with 16 Gaussian components.
+A \var{bdm} instance is a list with elements: \var{$dSet} a name identifying the dataset (\code{bdm.fName()} use this name to generate a default file name); \var{$data} a matrix with raw data; \var{$lbls} a vector of datapoint labels (in case they are known); \var{$N} the dataset size; \var{$is.distance} a logical value that is set to TRUE when the raw data is a distance matrix. Downstream steps of the mapping protocol will add more elements to the list.
+
+This example is based on a small synthetic dataset with \code{n = 5000} observations drawn from a 4-variate Gaussian Mixture Model (GMM) with 16 Gaussian components.
 }
 \examples{
 
