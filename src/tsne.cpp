@@ -139,8 +139,8 @@ void TSNE::Gradient(double* Y, int n, int dimY, double* P, double &Q, double* at
 // Evaluate t-SNE cost function (exactly)
 void TSNE::getCost(double* Y, int n, int dimY, double* P, double &Q, double &Cost)
 {
-	Q = FLT_MIN;
-	Cost = .0;
+	Q = .0;
+	double jxH = .0;	// join cross entropy
 	for (int i = 0; i < n; i++) {
 		double Si = .0;
 		for (int d = 0; d < dimY; d++) Si += Y[i *dimY +d] * Y[i *dimY +d];
@@ -154,67 +154,112 @@ void TSNE::getCost(double* Y, int n, int dimY, double* P, double &Q, double &Cos
 			Lij *= 2.0;
 			Lij += (Si + Sj + FLT_MIN);
 			double Qij = 1.0 / (1.0 + Lij);
-			Q += Qij;
 			int ij = tIdx(n, i, j);
-			Cost += P[ij] * std::log(Qij);
+			jxH += P[ij] * std::log(Qij);
+			Q += Qij;
 		}
 	}
-	Cost *= 2.0;
-	Cost += std::log(2.0 *Q);
-	Cost /= std::log(n *(n -1));
+	// normalize cross entropy
+	jxH *= 2.0;
+	jxH += std::log(2.0 *Q);
+	// cost
+	Cost = jxH /std::log(n *(n -1));
 }
 
-
-// transform input similarities into probabilities
-// FROM INPUT DATA
 void TSNE::X2P(double* X, int n, int m, double* Beta, double* P)
 {
 	// allocate memory
-	// . distances
-	double* L = (double*) malloc(n * (n-1) / 2 * sizeof(double));
-	if (L == NULL) Rcpp::stop("Memory allocation failed! \n");
-	// . row marginals
-	double* Z = (double*) malloc(n * sizeof(double));
-	if (Z == NULL) Rcpp::stop("Memory allocation failed! \n");
-	for (int i = 0; i < n; i++) Z[i] = FLT_MIN;
+	// . squared components
+	double* S = (double*) malloc(n * sizeof(double));
+	if (S == NULL) Rcpp::stop("Memory allocation failed! \n");
+	// . row similarity distribution
+	double* M = (double*) malloc(n * sizeof(double));
+	if (M == NULL) Rcpp::stop("Memory allocation failed! \n");
+	// compute squared components
+	for (int i = 0; i < n; i++) {
+		S[i] = .0;
+		for(int v = 0; v < m; v++) S[i] += X[i *m +v] * X[i *m +v];
+	}
 	// compute similarities & marginals
 	for (int i = 0; i < n; i++) {
-		double Si = .0;
-		for(int v = 0; v < m; v++) Si += X[i *m +v] * X[i *m +v];
-		for (int j = i+1; j < n; j++) {
-			double Sj = .0;
-			int ij = tIdx(n, i, j);
-			L[ij] = .0;
-			for(int v = 0; v < m; v++){
-				Sj += X[j *m +v] * X[j *m +v];
-				L[ij] -= X[i *m +v] * X[j *m +v];
-			}
-			L[ij] *= 2.0;
-			L[ij] += (Si + Sj + FLT_MIN);
-			Z[i] += std::exp(-Beta[i] * L[ij]);
-			Z[j] += std::exp(-Beta[j] * L[ij]);
+		double Zi = .0;
+		for (int j = 0; j < i; j++){
+			double Lji = .0;
+			for(int v = 0; v < m; v++) Lji -= X[i *m +v] * X[j *m +v];
+			Lji *= 2.0;
+			Lji += S[i] + S[j] + FLT_MIN;
+			M[j] = std::exp(-Beta[j] * Lji);
+			Zi += M[j];
 		}
-	}
-	// normalization & symmetrization
-	for (int i = 0; i < n; i++) {
+		for (int j = i+1; j < n; j++) {
+			double Lij = .0;
+			for(int v = 0; v < m; v++) Lij -= X[i *m +v] * X[j *m +v];
+			Lij *= 2.0;
+			Lij += S[i] + S[j] + FLT_MIN;
+			M[j] = std::exp(-Beta[i] * Lij);
+			Zi += M[j];
+		}
+		for (int j = 0; j < i; j++) {
+			int ji = tIdx(n, j, i);
+			P[ji] += M[j] /Zi /(2 *n);
+		}
 		for (int j = i+1; j < n; j++) {
 			int ij = tIdx(n, i, j);
-			P[ij] = (std::exp(-Beta[i] * L[ij]) / Z[i] + std::exp(-Beta[j] * L[ij]) / Z[j]) / (2*n);
+			P[ij] += M[j] /Zi /(2 *n);
 		}
 	}
 	// deallocate memory
-	free(L); L = NULL;
-	free(Z); Z = NULL;
+	free(S); S = NULL;
+	free(M); M = NULL;
 }
+
+// // transform input similarities into probabilities
+// // FROM INPUT DATA
+// void TSNE::X2P(double* X, int n, int m, double* Beta, double* P)
+// {
+// 	// allocate memory
+// 	// . distances
+// 	double* L = (double*) malloc(n * (n-1) / 2 * sizeof(double));
+// 	if (L == NULL) Rcpp::stop("Memory allocation failed! \n");
+// 	// . row marginals
+// 	double* Z = (double*) malloc(n * sizeof(double));
+// 	if (Z == NULL) Rcpp::stop("Memory allocation failed! \n");
+// 	for (int i = 0; i < n; i++) Z[i] = FLT_MIN;
+// 	// compute similarities & marginals
+// 	for (int i = 0; i < n; i++) {
+// 		double Si = .0;
+// 		for(int v = 0; v < m; v++) Si += X[i *m +v] * X[i *m +v];
+// 		for (int j = i+1; j < n; j++) {
+// 			double Sj = .0;
+// 			int ij = tIdx(n, i, j);
+// 			L[ij] = .0;
+// 			for(int v = 0; v < m; v++){
+// 				Sj += X[j *m +v] * X[j *m +v];
+// 				L[ij] -= X[i *m +v] * X[j *m +v];
+// 			}
+// 			L[ij] *= 2.0;
+// 			L[ij] += (Si + Sj + FLT_MIN);
+// 			Z[i] += std::exp(-Beta[i] * L[ij]);
+// 			Z[j] += std::exp(-Beta[j] * L[ij]);
+// 		}
+// 	}
+// 	// normalization & symmetrization
+// 	for (int i = 0; i < n; i++) {
+// 		for (int j = i+1; j < n; j++) {
+// 			int ij = tIdx(n, i, j);
+// 			P[ij] = (std::exp(-Beta[i] * L[ij]) / Z[i] + std::exp(-Beta[j] * L[ij]) / Z[j]) / (2*n);
+// 		}
+// 	}
+// 	// deallocate memory
+// 	free(L); L = NULL;
+// 	free(Z); Z = NULL;
+// }
 
 // transform input similarities into probabilities
 // FROM FULL-DISTANCE-MATRIX
 void TSNE::D2P(double* D, int n, double* Beta, double* P)
 {
 	// allocate memory
-	// . distances
-	double* L = (double*) malloc(n * (n-1) / 2 * sizeof(double));
-	if (L == NULL) Rcpp::stop("Memory allocation failed! \n");
 	// . row marginals
 	double* Z = (double*) malloc(n * sizeof(double));
 	if (Z == NULL) Rcpp::stop("Memory allocation failed! \n");
@@ -223,19 +268,19 @@ void TSNE::D2P(double* D, int n, double* Beta, double* P)
 	for (int i = 0; i < n; i++) {
 		for (int j = i+1; j < n; j++) {
 			int ij = tIdx(n, i, j);
-			L[ij] = D[i*n + j] * D[i*n + j];
-			Z[i] += std::exp(-Beta[i] * L[ij]);
-			Z[j] += std::exp(-Beta[j] * L[ij]);
+			double Lij = D[i*n + j] * D[i*n + j];
+			Z[i] += std::exp(-Beta[i] * Lij);
+			Z[j] += std::exp(-Beta[j] * Lij);
 		}
 	}
 	// normalization & symmetrization
 	for (int i = 0; i < n; i++) {
 		for (int j = i+1; j < n; j++) {
 			int ij = tIdx(n, i, j);
-			P[ij] = (std::exp(-Beta[i] * L[ij]) / Z[i] + std::exp(-Beta[j] * L[ij]) / Z[j]) / (2*n);
+			double Lij = D[i*n + j] * D[i*n + j];
+			P[ij] = (std::exp(-Beta[i] * Lij) / Z[i] + std::exp(-Beta[j] * Lij) / Z[j]) / (2*n);
 		}
 	}
 	// deallocate memory
-	free(L); L = NULL;
 	free(Z); Z = NULL;
 }

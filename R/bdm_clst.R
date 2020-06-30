@@ -20,10 +20,10 @@
 
 cluster.start <- function(threads, type = 'SOCK')
 {
-    cl <- NULL
-    if (type == 'MPI')
+	cl <- NULL
+	if (type == 'MPI')
 	{
-		cl <- snow::makeCluster()
+		cl <- makeCluster()
 		# cluster structure
 		cl.ranks <- unlist(clusterEvalQ(cl, thread.rank <- Rmpi::mpi.comm.rank(comm = 0)))
 		cl.nodes <- unlist(clusterEvalQ(cl, thread.node <- Rmpi::mpi.get.processor.name()))
@@ -32,24 +32,24 @@ cluster.start <- function(threads, type = 'SOCK')
 		clusterExport(cl, c('cl.hldrs'), envir = environment())
 		nulL <- clusterEvalQ(cl, thread.hldr <- cl.hldrs[Rmpi::mpi.get.processor.name()])
 	}
-    else
+	else
 	{
 		cl <- makeCluster(threads+1, type = 'PSOCK')
 		# cluster structure
-    	clusterApply(cl, seq_along(cl), function(i) thread.rank <<- (i-1))
+		clusterApply(cl, seq_along(cl), function(i) thread.rank <<- (i-1))
 	}
-    if (!is.null(cl))
-    {
-        clusterExport(cl, c('threads'), envir = environment())
-        cat('+++ running ', threads, ' threads \n', sep = '')
+	if (!is.null(cl))
+	{
+		clusterExport(cl, c('threads'), envir = environment())
+		cat('+++ running ', threads, ' threads \n', sep = '')
 		# load workers environment
-        clusterEvalQ(cl, library(bigmemory))
-        clusterEvalQ(cl, library(bigMap))
-    }
+		clusterEvalQ(cl, library(bigmemory))
+		clusterEvalQ(cl, library(bigMap))
+	}
 	if (substr(bdm.local(), 1, 7) == 'xxx.xxx'){
 		cat('+++ WARNING: bdm.local() not set !! \n')
 	}
-    return(cl)
+	return(cl)
 }
 
 # Close parallel computing environment.
@@ -60,5 +60,5 @@ cluster.start <- function(threads, type = 'SOCK')
 
 cluster.stop <- function(cl)
 {
-    if (!is.null(cl)) stopCluster(cl)
+	if (!is.null(cl)) stopCluster(cl)
 }

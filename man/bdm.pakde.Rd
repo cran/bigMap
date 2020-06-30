@@ -48,5 +48,5 @@ bdm.example()
 exMap <- bdm.pakde(exMap, threads = 4, ppx = 200, g = 200, g.exp = 3)
 }
 # --- plot paKDE output
-bdm.plot(exMap)
+bdm.pakde.plot(exMap)
 }

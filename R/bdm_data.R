@@ -12,19 +12,20 @@
 
 # Process raw input data
 
-Xdata.get <- function(X, whiten = 4, input.dim = NULL, is.distance = F)
+Xdata.get <- function(X, whiten = 4, input.dim = NULL, is.distance = F, quiet = FALSE)
 {
-	cat('+++ processing data \n')
+	if (!quiet) cat('+++ processing data \n')
+	if (is.null(input.dim))	input.dim <- ncol(X)
+
 	if (is.distance){
-	    return(list(X = X, process = 0, input.dim = 1))
+	    return(list(X = X, whiten = 0, input.dim = 1))
+	}
+	else if (whiten == 0){
+	    return(list(X = X[, 1:input.dim], whiten = 0, input.dim = input.dim))
 	}
 	else {
-        if (is.null(input.dim)){
-			if (whiten > 2) input.dim <- min(ncol(X), 30)
-			else input.dim <- ncol(X)
-		}
 		X <- data.get(X, whiten, input.dim)
-		return(list(X = X, whiten = whiten, input.dim = ncol(X)))
+		return(list(X = X, whiten = whiten, input.dim = input.dim))
 	}
 }
 
@@ -51,20 +52,17 @@ data.get <- function(X, whiten, input.dim)
 			return(message('+++ Error: scaling return NaNs !!!'))
 		}
 	}
-	else	# PCA/whitening
+	else if (whiten %in% c(3, 4))	# PCA/whitening
 	{
-		X <- t(scale(X, center = T, scale = F))
+		X <- scale(X, center = T, scale = F)
 		# covariance matrix
-		# Att!! ncol(X) stands for nrow(t(X)), the original X
-		V <- X %*% t(X) / ncol(X)
+		V <- t(X) %*% X / nrow(X)
 		# singular value decomposition
 		s <- La.svd(V)
-		# PCA
-		K <- t(s$u)
 		# whitening
-		if (whiten == 4) K <- diag(1/sqrt(s$d)) %*% K
+		if (whiten == 4) s$u <- s$u %*% diag(1/sqrt(s$d))
 		# take first input.dim dimensions
-		X <- t(K[1:input.dim, ] %*% X)
+		X <- X[, 1:input.dim] %*% s$u[1:input.dim, ]
 	}
 
 	return(X)
@@ -76,6 +74,7 @@ data.get <- function(X, whiten, input.dim)
 
 Xdata.exp <- function(cl, X, is.distance)
 {
+	clusterExport(cl, c('is.distance'), envir = environment())
 	if (attr(cl[[1]], 'class') == 'SOCKnode')
 	{
 		# input-data big.matrix
@@ -94,26 +93,25 @@ Xdata.exp <- function(cl, X, is.distance)
 		clusterExport(cl, c('Xbf.dsc'), envir = environment())
 		# attach big.matrix backing.file to holders
 		nulL <- clusterEvalQ(cl,
-            if (thread.rank == thread.hldr) {
-                Xhl <- attach.big.matrix(Xbf.dsc)
+			if (thread.rank == thread.hldr) {
+				Xhl <- attach.big.matrix(Xbf.dsc)
 				Xbm <- as.big.matrix(as.matrix(Xhl[ , ]), type='double')
 				rm(Xhl)
-            })
+			})
 		# get big.matrix backing.file descriptors from holders
 		cl.Xdsc <- clusterEvalQ(cl,
-            if (thread.rank == thread.hldr) {
-                describe(Xbm)
-            })
+			if (thread.rank == thread.hldr) {
+				describe(Xbm)
+			})
 		# export shared-memory descriptors
 		clusterExport(cl, c('cl.Xdsc'), envir = environment())
 		# attach big matrix to workers
 		nulL <- clusterEvalQ(cl,
-            if (thread.rank != thread.hldr){
-                Xbm <- attach.big.matrix(cl.Xdsc[[thread.hldr]])
-            })
+			if (thread.rank != thread.hldr){
+				Xbm <- attach.big.matrix(cl.Xdsc[[thread.hldr]])
+			})
 		# remove backing file
 		unlink(paste(f$path, f$bin, sep = '/'))
 		unlink(paste(f$path, f$desc, sep = '/'))
 	}
-	clusterExport(cl, c('is.distance'), envir = environment())
 }

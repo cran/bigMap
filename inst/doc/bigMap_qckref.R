@@ -43,29 +43,26 @@ myMap$Xbeta <- exMap$Xbeta
 myMap$ptsne  <- exMap$ptsne
 
 ## ---- eval = FALSE------------------------------------------------------------
-#  myMap <- bdm.ptsne(myMap, threads = 8, layers = 2, rounds = 2, ppx = 200)
+#  myMap <- bdm.ptsne(myMap, threads = 4, layers = 2, rounds = 2, ppx = 25)
 
 ## -----------------------------------------------------------------------------
 str(myMap$ptsne)
 
-## -----------------------------------------------------------------------------
-bdm.plot(myMap)
-
-## -----------------------------------------------------------------------------
-bdm.cost(myMap)
+## ---- fig.height = 4.0--------------------------------------------------------
+bdm.ptsne.plot(myMap)
 
 ## ---- echo = FALSE------------------------------------------------------------
 myMap$pakde  <- exMap$pakde
 myMap$pakde[[2]] <- NULL
 
 ## ---- eval = FALSE------------------------------------------------------------
-#  myMap <- bdm.pakde(myMap, threads = 4, ppx = 200, g.exp = 2)
+#  myMap <- bdm.pakde(myMap, threads = 4, ppx = 50, g.exp = 2)
 
 ## -----------------------------------------------------------------------------
 str(myMap$pakde)
 
 ## ---- fig.height = 4.0--------------------------------------------------------
-bdm.plot(myMap) # by default, bdm.plot() shows the output of the last step,
+bdm.pakde.plot(myMap)
 
 ## ---- echo = FALSE------------------------------------------------------------
 myMap$wtt  <- exMap$wtt
@@ -78,29 +75,19 @@ myMap$wtt[[2]] <- NULL
 str(myMap$wtt)
 
 ## -----------------------------------------------------------------------------
-bdm.plot(myMap)
+bdm.wtt.plot(myMap)
 
 ## -----------------------------------------------------------------------------
 myDataLabels <- bdm.labels(myMap)
 
-## ---- eval = FALSE------------------------------------------------------------
-#  myDataLabels2 <- bdm.labels(myMap, layer = 2)
+## ---- fig.height = 3.8--------------------------------------------------------
+bdm.cost(myMap)
 
-## ---- out.width = '70%'-------------------------------------------------------
-bdm.cost(myMap, offset = 100)
+## ---- fig.height = 3.5--------------------------------------------------------
+bdm.ptsne.plot(myMap, ptsne.cex = 0.6, class.pltt = rainbow(16), layer = 2)
 
-## ---- fig.height = 4.0--------------------------------------------------------
-bdm.plot(myMap, ptsne = TRUE, ptsne.cex = 0.6, ptsne.pltt = rainbow(16), layer = 2)
-
-## ---- tidy = FALSE------------------------------------------------------------
-mypalette <- colorspace::heat_hcl(12, h = c(300, 75), c. = c(35, 95), l = c(15, 90),
-    power = c(0.8, + 1.2), fixup = TRUE, gamma = NULL, alpha = 1)[3:12]
-
-## ---- fig.height = 4.0--------------------------------------------------------
-bdm.plot(myMap, pakde.pltt = mypalette, pakde.lvls = 10, plot.peaks = FALSE)
-
-## ---- fig.height = 5.5--------------------------------------------------------
-bdm.qMap(myMap, data = myMap$data[, 2:4], subset = which(myMap$lbls %in% 1:8))
+## ---- fig.height = 7.0--------------------------------------------------------
+bdm.qMap(myMap, data = myMap$data[, 1:4], subset = which(myMap$lbls %in% 1:8))
 
 ## -----------------------------------------------------------------------------
 # assume these are our class covariates
@@ -110,13 +97,25 @@ myclasses <- c('A', 'B', 'C', 'D', 'E')[(myMap$lbls %/% 4) +1]
 myMap$dMap <- dMap.copy
 
 ## ---- eval = FALSE------------------------------------------------------------
-#  myMap <- bdm.dMap(myMap, threads = 4, labels = myclasses)
+#  myMap <- bdm.dMap(myMap, threads = 4, data = myclasses)
 
-## ---- fig.height = 5.5--------------------------------------------------------
-bdm.dMap.plot(myMap, classes = c('B', 'D', 'E'))
+## ---- fig.height = 6.0--------------------------------------------------------
+bdm.dMap.plot(myMap, classes = c('A', 'B', 'E'))
 
 ## ---- fig.height = 5.5--------------------------------------------------------
 bdm.boxp(myMap)
+
+## ---- results = 'hide'--------------------------------------------------------
+myMap <- bdm.optk.s2nr(myMap, plot.optk = F, ret.optk = T)
+
+## ---- fig.height = 5.0--------------------------------------------------------
+bdm.optk.plot(myMap)
+
+## -----------------------------------------------------------------------------
+myMap <- bdm.merge.s2nr(myMap, k = 6, plot.merge = F, ret.merge = T)
+
+## ---- fig.height = 6.0--------------------------------------------------------
+bdm.wtt.plot(myMap)
 
 ## -----------------------------------------------------------------------------
 bdm.mybdm('~/myPath/')

@@ -12,12 +12,15 @@
 
 # Perplexity-based local betas
 
-Xbeta.get <- function(cl, X, ppx = 100, itr = 100, tol = 1e-05, is.distance = F)
+Xbeta.get <- function(cl, X, ppx = 100, itr = 100, tol = 1e-05, is.distance = F, quiet = FALSE)
 {
-    if (!all(unlist(clusterEvalQ(cl, ('Xbm' %in% ls()))))) {
+	if (!quiet) cat('+++ Computing Betas, perplexity ', ppx, ' \n', sep='')
+	if (!all(unlist(clusterEvalQ(cl, ('Xbm' %in% ls()))))) {
 		Xdata.exp(cl, X, is.distance)
 	}
 	B <- beta.get(cl, ppx, itr, tol)
+	# (beta is 1/(2*sigma**2) !!!)
+	if (!quiet) print(summary(1/sqrt(2 *B)))
 	return(list(B = B, ppx = ppx, itr = itr, tol = tol))
 }
 
@@ -36,15 +39,11 @@ Xbeta.get <- function(cl, X, ppx = 100, itr = 100, tol = 1e-05, is.distance = F)
 
 beta.get <- function(cl, ppx, itr, tol)
 {
-	cat('+++ Computing Betas, perplexity ', ppx, ' \n', sep='')
 	# export parameters
 	clusterExport(cl, c('ppx', 'itr', 'tol'), envir=environment())
 	# get perplexity-based local betas by chunks
 	beta.list <- clusterCall(cl, thread.beta)
-	beta <- unlist(beta.list)
-	# (beta is 1/(2*sigma**2) !!!)
-	print(summary(1/sqrt(2 *beta)))
-	return(beta)
+	return(unlist(beta.list))
 }
 
 # -----------------------------------------------------------------------------
@@ -52,9 +51,9 @@ beta.get <- function(cl, ppx, itr, tol)
 # -----------------------------------------------------------------------------
 
 thread.beta <- function(){
-    if (thread.rank != 0) {
-	   zBeta(thread.rank, threads, Xbm@address, is.distance, ppx, tol, itr)
-    }
+	if (thread.rank != 0) {
+		zBeta(thread.rank, threads, Xbm@address, is.distance, ppx, tol, itr)
+	}
 }
 
 # -----------------------------------------------------------------------------
@@ -65,39 +64,39 @@ Xbeta.exp <- function(cl, B)
 {
 	if (attr(cl[[1]], 'class') == 'SOCKnode')
 	{
-    	# define Bbm big.matrix (betas)
-    	Bbm <- big.matrix(length(B), 1, type = 'double')
-    	Bbm[ ] <- B
-    	Bbm.dsc <- describe(Bbm)
-    	# export big matrix descriptor to workers
-    	clusterExport(cl, c('Bbm.dsc'), envir = environment())
-    	# attach big matrix to workers
-    	clusterEvalQ(cl, Bbm <- attach.big.matrix(Bbm.dsc))
+		# define Bbm big.matrix (betas)
+		Bbm <- big.matrix(length(B), 1, type = 'double')
+		Bbm[ ] <- B
+		Bbm.dsc <- describe(Bbm)
+		# export big matrix descriptor to workers
+		clusterExport(cl, c('Bbm.dsc'), envir = environment())
+		# attach big matrix to workers
+		clusterEvalQ(cl, Bbm <- attach.big.matrix(Bbm.dsc))
 	}
 	else
 	{
-        f <- tName.get('B')
+		f <- tName.get('B')
 		Bbf <- big.matrix(length(B), 1, type='double', backingpath = f$path, backingfile = f$bin, descriptorfile = f$desc)
 		Bbf.dsc <- describe(Bbf)
-        Bbf[ ] <- B
+		Bbf[ ] <- B
 		clusterExport(cl, c('Bbf.dsc'), envir = environment())
 		# attach big.matrix backing.file to holders
 		nulL <- clusterEvalQ(cl,
-            if (thread.rank == thread.hldr) {
-                Bbm <- attach.big.matrix(Bbf.dsc)
-            })
+		if (thread.rank == thread.hldr) {
+			Bbm <- attach.big.matrix(Bbf.dsc)
+		})
 		# get big.matrix backing.file descriptors from holders
 		cl.Bdsc <- clusterEvalQ(cl,
-            if (thread.rank == thread.hldr) {
-                describe(Bbm)
-            })
+		if (thread.rank == thread.hldr) {
+			describe(Bbm)
+		})
 		# export sharedmemory descriptors
 		clusterExport(cl, c('cl.Bdsc'), envir = environment())
 		# attach big matrix to workers
 		nulL <- clusterEvalQ(cl,
-            if (thread.rank != thread.hldr){
-                Bbm <- attach.big.matrix(cl.Bdsc[[thread.hldr]])
-            })
+		if (thread.rank != thread.hldr){
+			Bbm <- attach.big.matrix(cl.Bdsc[[thread.hldr]])
+		})
 		# remove backing file
 		unlink(paste(f$path, f$bin, sep = '/'))
 		unlink(paste(f$path, f$desc, sep = '/'))

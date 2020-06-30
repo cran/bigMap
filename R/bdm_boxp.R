@@ -55,7 +55,12 @@ bdm.boxp <- function(bdm, byVars = F , layer = 1)
     {
         layout(layout.get(length(K)))
         nulL <- lapply(K, function(k) {
-                boxplot(bdm$data[which(L ==k), ], main = paste('cluster', k))
+				l <- which(L == k)
+				if (length(l)) {
+                	boxplot(bdm$data[l, ], main = paste('cluster', k))
+				} else {
+					cat('+++  cluster ', k, 'empty \n')
+				}
             })
         nullPlts <- max(layout.get(length(K))) -length(K) -1
     }

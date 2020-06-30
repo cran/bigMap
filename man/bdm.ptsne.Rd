@@ -21,9 +21,9 @@ bdm.ptsne(bdm, threads = 3, type = "SOCK", layers = 2, rounds = 1,
 
 \item{boost}{A running time accelerator factor. By default (\code{boost == 1}). See details.}
 
-\item{whiten}{Preprocessing of raw data. If \code{whiten = 4} (default value) raw data is preprocessed by computing the principal components (PCA) and whitening the rotated data. If \code{whiten = 3} only PCA is performed with NO whitening. If \code{whiten = 2} raw data is only centered and scaled. If \code{whiten = 1} raw data is only centered. If \code{whiten = 0} no preprocessing is performed at all.}
+\item{whiten}{Preprocessing of raw data. If \code{whiten = 4} (default value) raw data is transformed to principal components (PCA) and whitened afterwards. If \code{whiten = 3} only PCA is performed with NO whitening. If \code{whiten = 2} raw data is only centered and scaled. If \code{whiten = 1} raw data is only centered. If \code{whiten = 0} no preprocessing is performed at all.}
 
-\item{input.dim}{If \var{whiten} is TRUE, input.dim sets the number of principal components to be used as input dimensions. By default \code{input.dim = min(ncol(bdm$data), 30)}. If \var{whiten} is FALSE all data columns will be used as input dimensions (\code{input.dim = ncol(bdm$data)}).}
+\item{input.dim}{If raw data is given as (or is transformed to) principal components, \var{input.dim} sets the number of principal components to be used as input dimensions. Otherwise all data columns are used as input dimensions. By default \code{input.dim = ncol(bdm$data)}.}
 
 \item{ppx}{The value of perplexity to compute similarities (100 by default).}
 
@@ -47,6 +47,8 @@ Starts the ptSNE algorithm (first step of the mapping protocol).
 By default the algorithm is structured in \eqn{\sqrt{n}} epochs of \eqn{\sqrt{z}} iterations each, where \var{n} is the dataset size and \var{z} is the thread-size (\eqn{z=n*layers/threads}). The running time of the algorithm is then determined by \eqn{epochs*iters*t_i+ epochs*t_e} where \var{t_{i}} is the running time of a single iteration and \var{t_{e}} is the inter-epoch running time.
 
 The \var{boost} factor is meant to reduce the running time. With \eqn{boost > 1} the algorithm is structured in \eqn{n/boost} epochs with \eqn{z*boost} iterations each. This structure performs the same total number of iterations but arranged into a lower number of epochs, thus decreasing the total running time to \eqn{epochs*iters*t_i + 1/boost*epochs*t_e}. When the number of threads is high, the inter-epoch time can be high, in particular when using 'MPI' parallelization, thus, reducing the number of epochs can result in a significant reduction of the total running time. The counterpart is that increasing the number of iterations per epoch might result in a lack of convergence, thus the \var{boost} factor must be used with caution. To the most of our knowledge using values up to \eqn{boost=2.5} is generally safe.
+
+In case of extremely large datasets, we strongly recommend to initialize the \var{bdm} instance with already preprocessed data and use \code{whiten = 0}. Fast principal components approximations can be computed by means of \var{e.g.} \code{flashpcaR} or \code{scater} R packages.
 }
 \examples{
 
@@ -59,5 +61,5 @@ exMap <- bdm.ptsne(exMap, threads = 10, layers = 2, rounds = 2, ppx = 200)
 # --- plot the Cost function
 bdm.cost(exMap)
 # --- plot ptSNE output
-bdm.plot(exMap)
+bdm.ptsne.plot(exMap)
 }

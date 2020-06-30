@@ -15,7 +15,7 @@ bdm.dMap.plot(bdm, classes = NULL, join = FALSE, class.pltt = NULL,
 
 \item{join}{Logical value. If FALSE (default value), class mapping is based on the class conditional distributions. If TRUE, class mapping is based on the overall classes join distribution.}
 
-\item{class.pltt}{A palette of colours to identify the classes in the hard mapping. The length of the colour palette should be at least the number of classes plus one (the background colour being the first colour of the palette).}
+\item{class.pltt}{A colour palette to show class labels in the hard mapping. By default (\code{class.pltt = NULL}) the default palette is used.}
 
 \item{pakde.pltt}{A palette of colours to indicate the levels of the class density maps. The length of the colour palette should be at least the number of levels specified in \var{pakde.lvls}.}
 

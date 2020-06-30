@@ -37,11 +37,13 @@ assign(local, local, envir = bigMap.Env)
 #' # --- set default path for \var{mybdm}
 #' bdm.mybdm('~/mybdm')
 
-bdm.mybdm <- function(path=NULL)
+bdm.mybdm <- function(path = NULL)
 {
 	if (!is.null(path)){
-		if (substr(path, nchar(path), nchar(path)) != '/'){
-			path <- paste(path, '/', sep = '')
+		if (Sys.info()['sysname'] != 'Windows') {
+			if (substr(path, nchar(path), nchar(path)) != '/'){
+				path <- paste(path, '/', sep = '')
+			}
 		}
 		assign(mybdm, path, envir = bigMap.Env)
 	}
@@ -71,14 +73,14 @@ bdm.local <- function(dest = NULL)
 
 
 # ------------------------------------------------------------------------------
-# +++ Auxiliar: get temp filename
+# +++ Auxiliar: get temp filename (for Linux based systems !!!)
 # ------------------------------------------------------------------------------
 
 tName.get <- function(pattern){
-  t <- strsplit(tempfile(pattern = pattern), '/', fixed = T)[[1]]
-  fBin <- paste(t[length(t)], '.bin', sep = '')
-  fDesc <- paste(t[length(t)], '.desc', sep = '')
-  # fPath <- paste(t[1:(length(t)-1)], collapse = '/')
-  fPath <- '~/'
-  list(path = fPath, bin = fBin, desc = fDesc)
+	t <- strsplit(tempfile(pattern = pattern), '/', fixed = T)[[1]]
+	fBin <- paste(t[length(t)], '.bin', sep = '')
+	fDesc <- paste(t[length(t)], '.desc', sep = '')
+	# fPath <- paste(t[1:(length(t)-1)], collapse = '/')
+	fPath <- '~/'
+	list(path = fPath, bin = fBin, desc = fDesc)
 }

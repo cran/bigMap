@@ -20,7 +20,7 @@
 #'
 #' @param type The type of cluster: 'SOCK' (default) for intra-node parallelization, 'MPI' for inter-node parallelization (\code{message passing interface} parallel environment).
 #'
-#' @param labels A vector of point-wise covariate values or class labels. The covariate values can be of any factorizable type. By default (\code{labels=NULL}) the function computes the density maps based on the clustering labels (i.e. equivalent to \code{labels=bdm.labels(bdm)})
+#' @param data A vector of discret covariates or class labels. The covariate values can be of any factorizable type. By default (\code{data=NULL}) the function computes the density maps based on the clustering labels (i.e. equivalent to \code{data=bdm.labels(bdm)})
 #'
 #' @param layer The number of the t-SNE layer (1 by default).
 #'
@@ -38,7 +38,7 @@
 #' exMap <- bdm.dMap(exMap, threads = 4)
 #' }
 
-bdm.dMap <- function(bdm, threads = 2, type = 'SOCK', labels = NULL, layer = 1){
+bdm.dMap <- function(bdm, threads = 2, type = 'SOCK', data = NULL, layer = 1){
 
 	if (is.null(bdm$wtt[[layer]])){
 		return(message('+++ Error: up-stream step WTT not computed.'))
@@ -49,15 +49,16 @@ bdm.dMap <- function(bdm, threads = 2, type = 'SOCK', labels = NULL, layer = 1){
 	if (is.null(cl)) return(bdm)
 
 	# get class labels
-	if (is.null(labels) && !is.null(bdm$wtt[[layer]])) {
+	if (is.null(data) && !is.null(bdm$wtt[[layer]])) {
 		# use top-level clustering
-		labels <- bdm.labels(bdm, layer = layer)
-		L <- labels
+		data <- bdm.labels(bdm, layer = layer)
+		L <- data
 	}
 	else {
 		# use user supplied labels
-		L <- as.numeric(as.factor(labels))
+		L <- as.numeric(as.factor(data))
 	}
+	L.names <- levels(as.factor(data))
 
     # export class labels to workers
     clusterExport(cl, c('L'), envir = environment())
@@ -80,7 +81,7 @@ bdm.dMap <- function(bdm, threads = 2, type = 'SOCK', labels = NULL, layer = 1){
 	cell.size <- (pakde$x[2]-pakde$x[1]) * (pakde$y[2]-pakde$y[1])
 
 	bdm$dMap <- matrix(rep(0, grid.size * s), ncol= s)
-	colnames(bdm$dMap) <- levels(as.factor(labels))
+	colnames(bdm$dMap) <- L.names
 	for (i in seq(length(dMap.list))) {
 		bdm$dMap <- bdm$dMap + dMap.list[[i]]
 	}
@@ -128,8 +129,8 @@ thread.dMap <- function()
 #' @param classes A vector with a subset of class names or covariate values. Default value is \code{classes=NULL}. If no classes are specified (default value) all classes are plotted.
 #'
 #' @param join Logical value. If FALSE (default value), class mapping is based on the class conditional distributions. If TRUE, class mapping is based on the overall classes join distribution.
-#'
-#' @param class.pltt A palette of colours to identify the classes in the hard mapping. The length of the colour palette should be at least the number of classes plus one (the background colour being the first colour of the palette).
+
+#' @param class.pltt A colour palette to show class labels in the hard mapping. By default (\code{class.pltt = NULL}) the default palette is used.
 #'
 #' @param pakde.lvls  The number of levels of the heat-map when plotting class density maps (16 by default).
 #'
@@ -168,10 +169,15 @@ bdm.dMap.plot <- function(bdm, classes = NULL, join = FALSE, class.pltt = NULL, 
         stop('+++ Error: bdm.dMap() not computed ! \n')
     }
 
-    class.names <- paste('class:', colnames(bdm$dMap))
+    class.names <- sapply(colnames(bdm$dMap), function(name) {
+		if (all(strsplit(as.character(name), '')[[1]] %in% as.character(0:9)))
+			paste('class:', name, sep = ' ')
+		else
+			name
+	})
 
 	if (is.null(class.pltt)) {
-        class.pltt <- pltt.class(ncol(bdm$dMap))
+        class.pltt <- pltt.get(ncol(bdm$dMap))
 	}
     else {
 		if (length(class.pltt) != ncol(bdm$dMap)) {
@@ -233,20 +239,20 @@ bdm.dMap.plot <- function(bdm, classes = NULL, join = FALSE, class.pltt = NULL, 
 # add WTT lines
 dMap.plot.wtt <- function(bdm, wtt.lwd, plot.peaks, labels.cex, layer)
 {
-    if (!is.null(bdm$wtt[[layer]])) {
-        pakde <- bdm$pakde[[layer]]
-        wtt <- bdm$wtt[[layer]]
-    	if (!is.null(bdm$merge)){
-            plot.wtt(pakde, bdm$merge$C, wtt$grid, 2*wtt.lwd, '#222222')
-    	}
-        if (!is.null(bdm$wtt[[layer]])){
-            plot.wtt(pakde, wtt$C, wtt$grid, 0.5*wtt.lwd, '#EEEEEE')
-        }
-    	if (plot.peaks){
-    		if (!is.null(bdm$merge))
-                wtt.peaks(pakde, wtt, bdm$merge$C, labels.cex)
-    		else
-                wtt.peaks(pakde, wtt, wtt$C, labels.cex)
-    	}
-    }
+	if (!is.null(bdm$wtt[[layer]])) {
+		pakde <- bdm$pakde[[layer]]
+		wtt <- bdm$wtt[[layer]]
+		if (!is.null(bdm$merge)){
+			plot.wtt(pakde, bdm$merge$C, wtt$grid, 2*wtt.lwd, '#222222')
+		}
+		if (!is.null(bdm$wtt[[layer]])){
+			plot.wtt(pakde, wtt$C, wtt$grid, 0.5*wtt.lwd, '#EEEEEE')
+		}
+		if (plot.peaks){
+			if (!is.null(bdm$merge))
+				wtt.peaks(pakde, wtt, bdm$merge$C, labels.cex)
+			else
+				wtt.peaks(pakde, wtt, wtt$C, labels.cex)
+		}
+	}
 }

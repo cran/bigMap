@@ -62,19 +62,18 @@ cs.palette <- function (n, h = c(0, 90), c. = c(80, 30), l = c(30, 90), power = 
 }
 
 # default bdm colour-palette
-pltt.dflt <- function(bdm, layer = 1, w=NULL, l=32, i=12){
-	if (!is.null(bdm$wtt[[layer]]))
-	{
-		if (is.null(w)) w <- bdm$wtt[[layer]]$s
-		h.seq <- floor(seq(1, 256, length.out=w))
-		clr.pltt <- rep(0, max(bdm$wtt[[layer]]$C))
-		clr.pltt[unique(bdm$wtt[[layer]]$C)] <- sapply(seq(bdm$wtt[[layer]]$s), function(k)
-		{
-			cs.palette(l, h=h.seq[k])[i]
-		})
-	}
-	else clr.pltt <- pltt.get(s = 4)[2]
-	return(clr.pltt)
+pltt.dflt <- function(bdm, w = NULL, l = 32, i = 12, layer = 1){
+  if (!is.null(bdm$wtt[[layer]]))
+  {
+    if (is.null(w)) w <- min(bdm$wtt[[layer]]$s, 256)
+    h.seq <- floor(seq(1, 256, length.out = w))
+    pltt <- sapply(h.seq, function(k) cs.palette(l, h=k)[i])
+    pltt.rows <- ceiling(sqrt(length(pltt)))
+    pltt <- c(pltt, pltt[1:(pltt.rows**2 -length(pltt))])
+    clr.pltt <- t(matrix(pltt, nrow = pltt.rows))
+  }
+  else clr.pltt <- pltt.get(s = 4)[2]
+  return(clr.pltt)
 }
 
 # Base Palette
@@ -84,22 +83,22 @@ pltt.base <- function(w, l){
 }
 
 # Get Palette
-pltt.get <- function(s=16, l=16){
-	if (s<=16){
+pltt.get <- function(s = 16, l = 16){
+	if (s <= 16){
 		w <- c(1,2,2,2,3,3,4,4,3,5,6,6,7,7,8,8)[s]
 		i <- c(1,1,2,2,2,2,2,2,3,2,2,2,2,2,2,2)[s]
 	}
 	else{
 		w <- min(floor(sqrt(s)), 16)
 		i <- min(s%/%w, l)
-		while (w<16 && w*i<s){
+		while (w < 16 && w*i < s){
 			w <- w +1
 			i <- s%/%w
 			if (i<l && w*i<s) i <- i +1
 		}
 	}
 	pltt <- pltt.base(w, l)[seq(1, l, length.out=(i+1))[1:i],]
-	pltt <- rep(pltt, ceiling(s/length(pltt)))[1:s]
+	pltt <- rep(pltt, ceiling(s /length(pltt)))[1:s]
 	return(pltt)
 }
 

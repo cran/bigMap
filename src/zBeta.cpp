@@ -59,6 +59,8 @@ arma::Col<double> distk(int k, SEXP X, bool is_distance)
 // [[Rcpp::export]]
 arma::Col<double> zBeta(int thread_rank, int threads, SEXP X, bool is_distance, double ppx, double tol, int mxI)
 {
+	// printf(" rank %3d/%3d \n", thread_rank, threads);
+
 	// input data
 	Rcpp::XPtr<BigMatrix> ptrX(X);
 	MatrixAccessor<double> mtxX(*ptrX);
@@ -68,6 +70,8 @@ arma::Col<double> zBeta(int thread_rank, int threads, SEXP X, bool is_distance, 
 	std::vector<int> breaks (threads+1, 0);
 	for (int b = 0; b < threads; b++) breaks[b] = (int) b *(n +1.0) /threads;
 	breaks[threads] = n;
+
+	// printf(" rank %3d/%3d , chunk: %6d ... %6d \n", thread_rank, threads, breaks[thread_rank], breaks[thread_rank+1]-1);
 
 	// output data (chunk Betas)
 	int chunk_size = breaks[thread_rank] - breaks[thread_rank-1];
@@ -92,13 +96,13 @@ arma::Col<double> zBeta(int thread_rank, int threads, SEXP X, bool is_distance, 
 			if (Hdff > 0.0) {
 
 				minBeta = Beta[k];
-	     	// on first iterations avoid exploring whole range up to DBL_MAX
+				// on first iterations avoid exploring whole range up to DBL_MAX
 				if (maxBeta == DBL_MAX || maxBeta == 0.0) Beta[k] *= 2.0;
 				else Beta[k] = (Beta[k] + maxBeta) / 2.0;
 			}
 			else if (Hdff < 0.0){
 				maxBeta = Beta[k];
-	      	// on first iterations avoid exploring whole range down to 0.0
+				// on first iterations avoid exploring whole range down to 0.0
 				if (minBeta == 0.0 || minBeta == DBL_MAX) Beta[k] /= 2.0;
 				else Beta[k] = (Beta[k] + minBeta) / 2.0;
 			}

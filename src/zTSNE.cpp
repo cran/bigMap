@@ -114,7 +114,7 @@ double sckt_zTSNE(int thread_rank, int threads, int layers, SEXP X, SEXP B, SEXP
 	double* thread_P = (double*) calloc(thread_size * (thread_size-1) / 2, sizeof(double));
 	if (thread_P == NULL) Rcpp::stop("Memory allocation failed! \n");
 	// . cost function value
-	double thread_C = .0;
+	double thread_Cost = .0;
 
 	// +++ TSNE instance
 	TSNE* tsne = new TSNE();
@@ -127,7 +127,7 @@ double sckt_zTSNE(int thread_rank, int threads, int layers, SEXP X, SEXP B, SEXP
 	}
 
 	// +++ Run tsne
-	tsne -> run2D(thread_size, thread_P, thread_Y, thread_C, alpha, iters);
+	tsne -> run2D(thread_size, thread_P, thread_Y, thread_Cost, alpha, iters);
 
 	// update mapping positions
 	z = 0;
@@ -149,7 +149,7 @@ double sckt_zTSNE(int thread_rank, int threads, int layers, SEXP X, SEXP B, SEXP
 	free(thread_Y); thread_Y = NULL;
 	free(thread_P); thread_P = NULL;
 
-	return thread_C;
+	return thread_Cost;
 
 }
 
@@ -163,9 +163,9 @@ void zChnks(Rcpp::List& Z_list, const arma::Mat<double>& Y, const arma::Col<int>
 	{
 		arma::Mat<int> brks = brks_list[z];
 		arma::Mat<double> zChnk = Z_list[z];
-		int j = 0;
+		size_t j = 0;
 		for (size_t l = 0; l < brks.n_rows; l++) {
-			for (int i = brks(l, 0); i < brks(l, 1); i++) {
+			for (size_t i = brks(l, 0); i < brks(l, 1); i++) {
 				zChnk(j, 0) = I[i];
 				zChnk(j, 1) = Y(I[i], 2*l + 0);
 				zChnk(j, 2) = Y(I[i], 2*l + 1);
@@ -276,7 +276,7 @@ double mpi_zTSNE(SEXP X, SEXP B, arma::Mat<double>& Y, const arma::Col<int>& I, 
 	double* thread_P = (double*) calloc(thread_size * (thread_size-1) / 2, sizeof(double));
 	if (thread_P == NULL) Rcpp::stop("Memory allocation failed! \n");
 	// . cost function value
-	double thread_C = .0;
+	double thread_Cost = .0;
 
 	// +++ TSNE instance
 	TSNE* tsne = new TSNE();
@@ -289,7 +289,7 @@ double mpi_zTSNE(SEXP X, SEXP B, arma::Mat<double>& Y, const arma::Col<int>& I, 
 	}
 
 	// +++ Run tsne
-	tsne -> run2D(thread_size, thread_P, thread_Y, thread_C, alpha, iters);
+	tsne -> run2D(thread_size, thread_P, thread_Y, thread_Cost, alpha, iters);
 
 	// update mapping positions
 	for (int i = 0; i < thread_size; i++) {
@@ -305,6 +305,6 @@ double mpi_zTSNE(SEXP X, SEXP B, arma::Mat<double>& Y, const arma::Col<int>& I, 
 	free(thread_Y); thread_Y = NULL;
 	free(thread_P); thread_P = NULL;
 
-	return thread_C;
+	return thread_Cost;
 
 }

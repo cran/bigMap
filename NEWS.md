@@ -1,8 +1,15 @@
+## bigMap 2.3.1. Jun, 2020.
 
-# bigMap 2.1.0
+New feature: S2NR-based merging of clusters.
 
-Feb, 2019. Solved for staged install.
+Improved quantile-Map and density-Map plots.
 
-# bigMap 2.0.0
+The generic bdm.plot() has been replaced by particular plot functions bdm.ptsne.plot(), bdm.pakde.plot(9 and bdm.wtt.plot().
 
-Jan, 2019. First submission.
+## bigMap 2.1.0. Feb, 2019.
+
+Solved for staged install.
+
+## bigMap 2.0.0. Jan, 2019.
+
+First submission.

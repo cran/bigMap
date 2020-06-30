@@ -18,12 +18,12 @@ ptsne.get <- function(bdm, cl, Y.init = NULL, info = 0)
 {
 	cat('+++ computing ptSNE \n')
 	if (attr(cl[[1]], 'class') == 'SOCKnode')
-		sckt.ptsne(bdm, cl, Y.init = Y.init, info = info)
+		sckt.ptsne(bdm, cl, Y.init = Y.init, progress = info)
 	else
-		mpi.ptsne(bdm, cl, Y.init = Y.init, info = info)
+		mpi.ptsne(bdm, cl, Y.init = Y.init, progress = info)
 }
 
-sckt.ptsne <- function(bdm, cl, Y.init = NULL, info = 0)
+sckt.ptsne <- function(bdm, cl, Y.init = NULL, progress = 0)
 {
 	# setup parameters
 	threads <- bdm$ptsne$threads
@@ -43,7 +43,7 @@ sckt.ptsne <- function(bdm, cl, Y.init = NULL, info = 0)
 
 	# export setup parameters
 	clusterExport(cl, c('layers', 'iters', 'alpha'), envir = environment())
-	clusterExport(cl, c('info'), envir = environment())
+	# clusterExport(cl, c('progress'), envir = environment())
 
 	# initial mapping (random circular embedding of radius 1)
 	if (is.null(Y.init)) Y.init <- ptsne.init(nrow(bdm$data), layers)
@@ -62,10 +62,6 @@ sckt.ptsne <- function(bdm, cl, Y.init = NULL, info = 0)
 	Sbm <- as.big.matrix(matrix(0, layers, (rxEpochs +1)), type='double')
 	Sbm.dsc <- describe(Sbm)
 
-	# best mapping
-	Zbm <- deepcopy(Ybm)
-	Zbm.dsc <- describe(Zbm)
-
 	# attach bigmatrices to workers
 	clusterExport(cl, c('Ybm.dsc'), envir=environment())
 	clusterEvalQ(cl, Ybm <- attach.big.matrix(Ybm.dsc))
@@ -75,18 +71,12 @@ sckt.ptsne <- function(bdm, cl, Y.init = NULL, info = 0)
 	clusterEvalQ(cl, Cbm <- attach.big.matrix(Cbm.dsc))
 	clusterExport(cl, c('Sbm.dsc'), envir=environment())
 	clusterEvalQ(cl, Sbm <- attach.big.matrix(Sbm.dsc))
-	clusterExport(cl, c('Zbm.dsc'), envir=environment())
-	clusterEvalQ(cl, Zbm <- attach.big.matrix(Zbm.dsc))
-
-	# best epoch
-	e.best <- 1
 
 	# special initialization for thread.rank == 0
 	clusterEvalQ(cl,
 		if (thread.rank == 0) {
 			w <- new.env()
 			w$mapp.list <- list()
-			w$e.best <- 1
 		})
 
 	# compute initial cost
@@ -105,20 +95,24 @@ sckt.ptsne <- function(bdm, cl, Y.init = NULL, info = 0)
 	t0 <- Sys.time()
 
 	# report starting information
-	avgCost <- mean(Cbm[, e.best])
-	avgSize <- mean(Sbm[, e.best])
-	ptsne.info(threads, thrd.size, rxEpochs, iters, (e.best-1), avgCost, avgSize, t0)
+	avgCost <- mean(Cbm[, 1])
+	avgSize <- mean(Sbm[, 1])
+	if (progress >= 0) {
+		ptsne.info(threads, thrd.size, rxEpochs, iters, 0, avgCost, avgSize, t0)
+	}
 
 	for (r in seq(rounds)){
 
-		cat('--- round ', formatC(r, width=2, flag='0'), '/', formatC(rounds, width=2, flag='0'), sep='')
-		cat('     ')
-		cat('   <Cost>   ')
-		cat('   <Size>   ')
-		cat('   epSecs ')
-		cat(' time2End ')
-		cat(' eTime ')
-		cat('\n')
+		if (progress >= 0) {
+			cat('--- round ', formatC(r, width=2, flag='0'), '/', formatC(rounds, width=2, flag='0'), sep='')
+			cat('     ')
+			cat('   <Cost>   ')
+			cat('   <Size>   ')
+			cat('   epSecs ')
+			cat(' time2End ')
+			cat(' eTime ')
+			cat('\n')
+		}
 
 		for (e in seq((r-1)*epochs+1, (r*epochs))) {
 			# epoch start-time
@@ -128,9 +122,9 @@ sckt.ptsne <- function(bdm, cl, Y.init = NULL, info = 0)
 			# perform ptSNE
 			nulL <- clusterCall(cl, sckt.ztsne, e)
 			# security break control
-			if (mean(Cbm[, e+1]) < 0) break
+			if (mean(Cbm[, e+1]) <0) break
 			# report status
-			if (info >= 0) {
+			if (progress >=0) {
 				avgCost <- mean(Cbm[, e+1])
 				avgSize <- mean(Sbm[, e+1])
 				epoch.info(e, rxEpochs, avgCost, avgSize, t0, te)
@@ -139,28 +133,28 @@ sckt.ptsne <- function(bdm, cl, Y.init = NULL, info = 0)
 		}
 
 		# save round
-		if (info >= 1 || r == rounds){
+		if (progress >= 1 || r == rounds){
 			bdm$ptsne$rounds <- r
-			bdm$ptsne$Y <- as.matrix(Zbm[ , ])
+			bdm$ptsne$Y <- as.matrix(Ybm[ , ])
 			bdm$ptsne$cost <- as.matrix(Cbm[, 1:(r*epochs +1)])
 			bdm$ptsne$size <- as.matrix(Sbm[, 1:(r*epochs +1)])
 		}
-		if (info == 1) bdm.scp(bdm)
+		if (progress == 1) bdm.scp(bdm)
 
 		# security break control
-		if (mean(Cbm[, (r*epochs +1)]) < 0) break
+		if (mean(Cbm[, (r*epochs +1)]) <0 ) break
 
 	}
 
-	if (info == 2) {
-		bdm$info <- clusterEvalQ(cl, if (thread.rank == 0) w$mapp.list)[[1]]
-	}
+	# if (progress == 2) {
+	# 	bdm$progress <- clusterEvalQ(cl, if (thread.rank == 0) w$mapp.list)[[1]]
+	# }
 
 	# report status
-	e.best <- clusterEvalQ(cl, if (thread.rank == 0) w$e.best)[[1]]
-	avgCost <- mean(Cbm[, e.best])
-	avgSize <- mean(Sbm[, e.best])
-	ptsne.info(threads, thrd.size, rxEpochs, iters, (e.best-1), avgCost, avgSize, t0)
+	avgCost <- mean(Cbm[, e +1])
+	avgSize <- mean(Sbm[, e +1])
+
+	ptsne.info(threads, thrd.size, rxEpochs, iters, e, avgCost, avgSize, t0)
 
 	return(bdm)
 
@@ -178,15 +172,10 @@ sckt.ztsne <- function(epoch)
 			lc <- (l-1)*2 +1
 			sqrt(diff(range(Ybm[, lc]))**2 + diff(range(Ybm[, (lc+1)]))**2)
 		})
-		# check best solution
-		if (mean(Cbm[, (epoch +1)]) <= mean(Cbm[, w$e.best])) {
-		 	Zbm[ , ] <- Ybm[ , ]
-			w$e.best <- (epoch +1)
-		}
-		# save current embedding to make movie
-		if (info == 2) {
-			w$mapp.list[[(epoch +1)]] <- list(epoch = (epoch +1), Y = as.matrix(Ybm[ , 1:2]))
-		}
+		# # save current embedding to make movie
+		# if (progress == 2) {
+		# 	w$mapp.list[[(epoch +1)]] <- list(epoch = (epoch +1), Y = as.matrix(Ybm[ , 1:2]))
+		# }
 	}
 	else {
 		Cbm[thread.rank, (epoch +1)] <- sckt_zTSNE(thread.rank, threads, layers, Xbm@address, Bbm@address, Ybm@address, Ibm@address, iters, alpha, is.distance)
@@ -197,7 +186,7 @@ sckt.ztsne <- function(epoch)
 # +++ ptSNE MPI
 # -----------------------------------------------------------------------------
 
-mpi.ptsne <- function(bdm, cl, Y.init = NULL, info = 0)
+mpi.ptsne <- function(bdm, cl, Y.init = NULL, progress = 0)
 {
 	# setup parameters
 	threads <- bdm$ptsne$threads
@@ -277,7 +266,7 @@ mpi.ptsne <- function(bdm, cl, Y.init = NULL, info = 0)
 
 		cat('--- round ', formatC(r, width=2, flag='0'), '/', formatC(rounds, width=2, flag='0'), sep='')
 		cat('     ')
-		cat('   <Cost>   ')
+		cat('   <Qlty>   ')
 		cat('   <Size>   ')
 		cat(' <epSecs> ')
 		cat(' time2End ')
@@ -306,7 +295,7 @@ mpi.ptsne <- function(bdm, cl, Y.init = NULL, info = 0)
 			e.size[, (e+1)] <- eSize(Y)
 
 			# report status
-			if (info >= 0) {
+			if (progress >= 0) {
 				avgCost <- mean(e.cost[, e+1])
 				avgSize <- mean(e.size[, e+1])
 				epoch.info(e, rxEpochs, avgCost, avgSize, t0, te)
@@ -317,13 +306,13 @@ mpi.ptsne <- function(bdm, cl, Y.init = NULL, info = 0)
 		}
 
 		# save round
-		if (info >= 1 || r == rounds) {
+		if (progress >= 1 || r == rounds) {
 			bdm$ptsne$rounds <- r
 			bdm$ptsne$Y <- Y
 			bdm$ptsne$cost <- as.matrix(e.cost[, 1:(r *epochs +1)])
 			bdm$ptsne$size <- as.matrix(e.size[, 1:(r *epochs +1)])
 		}
-		if (info == 1) bdm.scp(bdm)
+		if (progress == 1) bdm.scp(bdm)
 
 	}
 

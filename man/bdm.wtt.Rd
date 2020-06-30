@@ -27,5 +27,5 @@ bdm.example()
 # --- perform WTT
 exMap <- bdm.wtt(exMap)
 # --- plot WTT output
-bdm.plot(exMap)
+bdm.wtt.plot(exMap)
 }
